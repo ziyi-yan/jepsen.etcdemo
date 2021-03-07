@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  tester:
+    image: jepsen-etcdemo-tester
+    build:
+      context: ./
+      dockerfile: Dockerfile.tester
+    networks:
+      - testnet
+    depends_on:
+      - n1
+      - n2
+      - n3
+      - n4
+      - n5
+  n1:
+    image: jepsen-etcdemo-node
+    networks:
+      - testnet
+    expose:
+      - "22"
+  n2:
+    image: jepsen-etcdemo-node
+    networks:
+      - testnet
+    expose:
+      - "22"
+  n3:
+    image: jepsen-etcdemo-node
+    networks:
+      - testnet
+    expose:
+      - "22"
+  n4:
+    image: jepsen-etcdemo-node
+    networks:
+      - testnet
+    expose:
+      - "22"
+  n5:
+    image: jepsen-etcdemo-node
+    networks:
+      - testnet
+    expose:
+      - "22"
+networks:
+  testnet:
