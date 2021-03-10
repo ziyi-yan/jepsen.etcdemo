@@ -3,7 +3,9 @@
             [clojure.string :as str]
             [verschlimmbesserung.core :as v]
             [slingshot.slingshot :refer [try+]]
+            [knossos.model :as model]
             [jepsen
+             [checker :as checker]
              [cli :as cli]
              [client :as client]
              [control :as c]
@@ -11,6 +13,7 @@
              [generator :as gen]
              [tests :as tests]]
             [jepsen.control.util :as cu]
+            [jepsen.checker.timeline :as timeline]
             [jepsen.os.debian :as debian]))
 
 (defn node-url
@@ -124,6 +127,12 @@
           :os debian/os
           :db (db "v3.1.5")
           :client (Client. nil)
+          :checker (checker/compose
+                    {:perf   (checker/perf)
+                     :linear (checker/linearizable
+                              {:model     (model/cas-register)
+                               :algorithm :linear})
+                     :timeline (timeline/html)})
           :generator (->> (gen/mix [r w cas])
                           (gen/stagger 1)
                           (gen/nemesis nil)

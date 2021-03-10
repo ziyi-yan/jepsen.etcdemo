@@ -5,7 +5,8 @@ RUN apt-get update -y && apt-get upgrade -y && apt-get install -y \
     curl \
     rlwrap \
     default-jre \
-    git
+    git \
+    gnuplot
 # TODO: add this command back when we finish environment setup
 # && rm -rf /var/lib/apt/lists/*
 
