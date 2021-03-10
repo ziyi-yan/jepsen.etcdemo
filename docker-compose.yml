@@ -2,6 +2,7 @@ version: "3.9"
 services:
   tester:
     image: jepsen-etcdemo-tester
+    privileged: true
     build:
       context: ./
       dockerfile: Dockerfile.tester
@@ -15,6 +16,7 @@ services:
       - n5
   n1:
     image: jepsen-etcdemo-node
+    privileged: true
     build:
       context: ./
       dockerfile: Dockerfile.node
@@ -24,6 +26,7 @@ services:
       - "22"
   n2:
     image: jepsen-etcdemo-node
+    privileged: true
     build:
       context: ./
       dockerfile: Dockerfile.node
@@ -33,6 +36,7 @@ services:
       - "22"
   n3:
     image: jepsen-etcdemo-node
+    privileged: true
     build:
       context: ./
       dockerfile: Dockerfile.node
@@ -42,6 +46,7 @@ services:
       - "22"
   n4:
     image: jepsen-etcdemo-node
+    privileged: true
     build:
       context: ./
       dockerfile: Dockerfile.node
@@ -51,6 +56,7 @@ services:
       - "22"
   n5:
     image: jepsen-etcdemo-node
+    privileged: true
     build:
       context: ./
       dockerfile: Dockerfile.node
