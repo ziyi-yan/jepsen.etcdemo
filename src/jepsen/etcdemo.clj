@@ -1,10 +1,14 @@
 (ns jepsen.etcdemo
   (:require [clojure.tools.logging :refer :all]
             [clojure.string :as str]
+            [verschlimmbesserung.core :as v]
+            [slingshot.slingshot :refer [try+]]
             [jepsen
              [cli :as cli]
+             [client :as client]
              [control :as c]
              [db :as db]
+             [generator :as gen]
              [tests :as tests]]
             [jepsen.control.util :as cu]
             [jepsen.os.debian :as debian]))
@@ -72,16 +76,58 @@
     (log-files [_ test node]
       [logfile])))
 
+(defn r   [_ _] {:type :invoke, :f :read, :value nil})
+(defn w   [_ _] {:type :invoke, :f :write, :value (rand-int 5)})
+(defn cas [_ _] {:type :invoke, :f :cas, :value [(rand-int 5) (rand-int 5)]})
+
+(defn parse-long
+  "Parses a string to a Long. Passes through `nil`."
+  [s]
+  (when s (Long/parseLong s)))
+
+(defrecord Client [conn]
+  client/Client
+  (open! [this test node]
+    (assoc this :conn (v/connect (client-url node)
+                                 {:timeout 5000})))
+
+  (setup! [this test])
+
+  (invoke! [_ test op]
+    (case (:f op)
+      :read  (assoc op :type :ok, :value (parse-long (v/get conn "foo")))
+      :write (do (v/reset! conn "foo" (:value op))
+                 (assoc op :type :ok))
+      :cas   (try+
+              (let [[old new] (:value op)]
+                (assoc op :type (if (v/cas! conn "foo" old new)
+                                  :ok
+                                  :fail)))
+              (catch [:errorCode 100] ex
+                (assoc op :type :fail, :error :not-found)))))
+
+  (teardown! [this test])
+
+  (close! [_ test]
+    ; If our connection were stateful, we'd close it here. Verschlimmmbesserung
+    ; doesn't actually hold connections, so there's nothing to close.
+    ))
+
 (defn etcd-test
   "Given an options map from the command line runner (e.g. :nodes, :ssh,
   :concurrency, ...), constructs a test map."
   [opts]
   (merge tests/noop-test
          opts
-         {:name "etcd"
+         {:pure-generators true
+          :name "etcd"
           :os debian/os
           :db (db "v3.1.5")
-          :pure-generators true}))
+          :client (Client. nil)
+          :generator (->> (gen/mix [r w cas])
+                          (gen/stagger 1)
+                          (gen/nemesis nil)
+                          (gen/time-limit 15))}))
 
 (defn -main
   "Handles command line arguments. Can either run a test, or a web server for
