@@ -16,7 +16,7 @@
              [tests :as tests]]
             [jepsen.control.util :as cu]
             [jepsen.checker.timeline :as timeline]
-            [jepsen.os.debian :as debian]))
+            [jepsen.os.centos :as centos]))
 
 (defn node-url
   "An HTTP url for connecting to a node on a particular port."
@@ -64,8 +64,8 @@
         binary
         :--log-output                   :stderr
         :--name                         (name node)
-        :--listen-peer-urls             (peer-url node)
-        :--listen-client-urls           (client-url node)
+        :--listen-peer-urls             (peer-url ((:ip-addr test) node))
+        :--listen-client-urls           (client-url ((:ip-addr test) node))
         :--advertise-client-urls        (client-url node)
         :--initial-cluster-state        :new
         :--initial-advertise-peer-urls  (peer-url node)
@@ -136,9 +136,13 @@
            {:pure-generators true
             :name (str "etcd q=" quorum)
             :quorum quorum
-            :os debian/os
+            :os centos/os
             :db (db "v3.1.5")
             :client (Client. nil)
+            :ip-addr (reduce (fn [ip-addr node]
+                              (assoc ip-addr node (str/trim (:out (clojure.java.shell/sh "dig" "+short" node)))))
+                              {}
+                              (:nodes opts))
             :nemesis (nemesis/partition-random-halves)
             :checker (checker/compose
                       {:perf  (checker/perf)

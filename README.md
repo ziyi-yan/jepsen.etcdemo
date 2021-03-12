@@ -6,7 +6,7 @@ A Clojure library designed to test etcd.
 
 1. Install [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VSCode.
 2. Use VSCode Remote to enter the tester container.
-3. Run `lein run test`.
+3. Run `lein run test --time-limit 30 --concurrency 10 --ssh-private-key ~/.ssh/id_rsa -q`.
 
 ## License
 
